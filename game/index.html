@@ -550,7 +550,7 @@ body::before{opacity:.08}
   const shoeColors=['#eeeeee','#f43b46','#b4ffe3','#17191f'];
   let rngSeed=0x38524944;
   function rand() {rngSeed=(Math.imul(rngSeed,1664525)+1013904223)>>>0;return rngSeed/4294967296;}
-  const state={ mode:'menu',character,t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,jumpHeld:false,player:{y:0,vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,angle:0,trail:[]},lastScoreDraw:-1 };
+  const state={ mode:'menu',character,t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,jumpHeld:false,player:{y:0,vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]},lastScoreDraw:-1 };
   const fmt=n=>String(Math.floor(Math.max(0,n))).padStart(6,'0');
   function playerX(){return W<600?W*.245:W*.285;}
   // Continuous 174 BPM phase: unlike the old sawtooth pulse, this is C1-smooth
@@ -664,7 +664,7 @@ body::before{opacity:.08}
     window.phaseLeaderboard.begin({character:state.character,...avatar});
     rngSeed=0x38524944;
     Object.assign(state,{mode:'running',t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,lastScoreDraw:-1,jumpHeld:false});
-    Object.assign(state.player,{y:waveY(0,0),vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,angle:0,trail:[]});
+    Object.assign(state.player,{y:waveY(0,0),vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]});
     makeHazards();
     el.stageBanner.classList.remove('show');
     el.heading.classList.remove('pause-heading');
@@ -728,7 +728,7 @@ body::before{opacity:.08}
     if(state.mode!=='running'&&state.mode!=='paused')return;
     state.mode='over';releaseJump();stopMusic();
     state.shake=0;state.flash=0;state.phaseFlash=0;
-    state.player.invuln=0;state.player.grounded=true;state.player.trail=[];
+    state.player.invuln=0;state.player.recoveryUntil=null;state.player.grounded=true;state.player.trail=[];
     const total=Math.floor(state.score+state.distance*.095);
     window.phaseLeaderboard.finish({score:total,round:state.round,duration:state.elapsed,distance:state.distance});
     if(total>best){best=total;try{localStorage.setItem('zvuq-test-v1-zvuq-phase-rider-bars8-best',String(best));}catch(_){}}
@@ -760,7 +760,7 @@ body::before{opacity:.08}
   }
   function performJump(){
     const p=state.player;
-    if(p.buffer<=0||(!p.grounded&&p.coyote<=0))return;
+    if(p.recoveryUntil!==null||p.buffer<=0||(!p.grounded&&p.coyote<=0))return;
     const phase=(state.elapsed%BEAT)/BEAT;
     const diff=Math.min(phase,1-phase)*BEAT;
     const perfect=diff<.09;
@@ -798,14 +798,33 @@ body::before{opacity:.08}
     playNote(440*Math.pow(2,(n%5)/12),.24,'sine',.10);
     updateHud();
   }
+  function recoverFromGap(){
+    const p=state.player;
+    const clearance=24,runway=Math.max(100,state.speed*.35);
+    let landing=state.distance;
+    const blocked=state.hazards.map(h=>h.kind==='gap'?{start:h.x,end:h.x+h.w}:clipBounds(h)).sort((a,b)=>a.start-b.start);
+    for(const interval of blocked){
+      if(interval.end+clearance>=landing&&interval.start-clearance<=landing+runway){
+        landing=interval.end+clearance;
+      }
+    }
+    // Carry the player across the unsafe stretch without skipping route time or music.
+    p.recoveryUntil=landing;
+    p.y=waveY(state.distance);p.vy=0;p.grounded=true;
+    p.coyote=0;p.buffer=0;p.holdAge=0;p.trail=[];state.jumpHeld=false;
+    p.invuln=Math.max(p.invuln,.35);
+  }
   function hurt(kind){
     const p=state.player;
-    if(p.invuln>0||state.mode!=='running')return;
+    if(state.mode!=='running')return;
+    if(p.invuln>0){
+      if(kind==='gap')recoverFromGap();
+      return;
+    }
     state.combo=1;state.shake=.43;state.flash=.6;
     p.invuln=1.55;p.grounded=false;p.coyote=0;p.vy=-470;
     if(kind==='gap'){
-      // Respawn vertically; the route keeps its musical position.
-      p.y=waveY(state.distance)-37;
+      recoverFromGap();
     }
     announce(kind==='gap'?'✕ PÁD DO MEZERY':'✕ NÁRAZ DO PŘEKÁŽKY',true);
     burst(playerX(),p.y-25,'#ff303d',27);
@@ -845,7 +864,13 @@ body::before{opacity:.08}
     p.buffer=Math.max(0,p.buffer-dt);
     p.coyote=Math.max(0,p.coyote-dt);
     makeHazards();
-    const ground=surface(state.distance);
+    if(p.recoveryUntil!==null){
+      p.invuln=Math.max(p.invuln,.35);
+      if(state.distance>=p.recoveryUntil&&surface(state.distance)!==null){
+        p.recoveryUntil=null;
+      }
+    }
+    const ground=p.recoveryUntil!==null?waveY(state.distance):surface(state.distance);
     const beforeY=p.y;
     if(p.grounded){
       if(ground!==null){p.y=ground;p.vy=0;}
@@ -1099,7 +1124,8 @@ body::before{opacity:.08}
     const x=preview?120:playerX(), y=preview?226:p.y;
     const travel=preview?state.t*2:state.distance*.047;
     const isDjane=(appearance?appearance.character:state.character)==='djane';
-    if(p.invuln>0&&Math.floor(p.invuln*13)%2===0)return;
+    const blinkTime=p.recoveryUntil!=null?state.elapsed:p.invuln;
+    if(p.invuln>0&&Math.floor(blinkTime*13)%2===0)return;
     const jacket=topColors[look.color];
     const accent=isDjane?'#ef5eae':'#f43b46';
     const headset=isDjane?'#b4ffe3':'#f22f3a';
