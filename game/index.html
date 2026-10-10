@@ -511,26 +511,36 @@ body::before{opacity:.08}
   let best=0;
   try {best=Math.max(0,Number(localStorage.getItem('zvuq-test-v1-zvuq-phase-rider-bars8-best')||0));}catch(_){}
   const beatEls=[...el.beat.querySelectorAll('span')];
+  const characterDefinitions={
+    dj:{label:'DJ',hair:0,earrings:0,accent:'#f43b46',headset:'#f22f3a',shoulder:16},
+    djane:{label:'DJANE',hair:5,earrings:1,accent:'#ef5eae',headset:'#b4ffe3',shoulder:14}
+  };
   let character='dj';
   try { const saved=localStorage.getItem('zvuq-test-v1-zvuq-phase-rider-character'); if(saved==='djane')character='djane'; }catch(_){}
+  let savedCharacterState=null;
+  try{
+    const saved=JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-character-state-v3')||'null');
+    if(saved?.version===3&&Object.hasOwn(characterDefinitions,saved.selected)&&saved.profiles&&typeof saved.profiles==='object'&&!Array.isArray(saved.profiles)){
+      savedCharacterState=saved;character=saved.selected;
+    }
+  }catch(_){}
   const characterButtons=[...document.querySelectorAll('.character-card')];
+  function canEditAvatar(){return !startPending&&(state.mode==='menu'||state.mode==='over');}
   function chooseCharacter(choice){
-    if(choice!=='dj'&&choice!=='djane')return;
-    if(state.mode!=='menu'&&state.mode!=='over')return;
+    if(!Object.hasOwn(characterDefinitions,choice))return;
+    if(!canEditAvatar())return;
     character=choice;
-    state.character=choice;
     avatar=characterAvatars[choice];
     saveAvatar();
     syncAvatarControls();
     characterButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.character===choice)));
-    try {localStorage.setItem('zvuq-test-v1-zvuq-phase-rider-character',choice);}catch(_){}
   }
   characterButtons.forEach(button=>button.addEventListener('click',()=>chooseCharacter(button.dataset.character)));
   characterButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.character===character)));
 
-  const avatarOptions={base:['DJ','DJANE'],head:['KLASICKÁ','KULATÁ','HRANATÁ','ÚZKÁ'],skin:['SVĚTLÁ','ZLATÁ','HNĚDÁ','TMAVÁ'],hair:['KRÁTKÉ S PATKOU','VYHOLENÉ BOKY','AFRO','ČÍRO','BEZ VLASŮ','MIKÁDO','DLOUHÉ','CULÍK'],hairColor:['TMAVÉ','HNĚDÉ','BLOND','RŮŽOVÉ'],top:['TRIČKO','MIKINA','BUNDA','SAKO'],color:['GRAFIT','ČERVENÁ','TYRKYS','FIALOVÁ'],pants:['TEPLÁKY','DŽÍNY','CARGO','ČERNÉ'],shoes:['BÍLÉ','ČERVENÉ','MINT','ČERNÉ'],accessory:['SLUCHÁTKA','SLUCHÁTKA + BRÝLE','KŠILTOVKA','ZLATÝ ŘETÍZEK','BEZ DALŠÍHO DOPLŇKU','BRÝLE'],ride:['SKATEBOARD','HOVERBOARD','LÉTAJÍCÍ VINYL'],earrings:['BEZ NÁUŠNIC','KROUŽKY']};
+  const avatarOptions={base:Object.values(characterDefinitions).map(definition=>definition.label),head:['KLASICKÁ','KULATÁ','HRANATÁ','ÚZKÁ'],skin:['SVĚTLÁ','ZLATÁ','HNĚDÁ','TMAVÁ'],hair:['KRÁTKÉ S PATKOU','VYHOLENÉ BOKY','AFRO','ČÍRO','BEZ VLASŮ','MIKÁDO','DLOUHÉ','CULÍK'],hairColor:['TMAVÉ','HNĚDÉ','BLOND','RŮŽOVÉ'],top:['TRIČKO','MIKINA','BUNDA','SAKO'],color:['GRAFIT','ČERVENÁ','TYRKYS','FIALOVÁ'],pants:['TEPLÁKY','DŽÍNY','CARGO','ČERNÉ'],shoes:['BÍLÉ','ČERVENÉ','MINT','ČERNÉ'],accessory:['SLUCHÁTKA','SLUCHÁTKA + BRÝLE','KŠILTOVKA','ZLATÝ ŘETÍZEK','BEZ DALŠÍHO DOPLŇKU','BRÝLE'],ride:['SKATEBOARD','HOVERBOARD','LÉTAJÍCÍ VINYL'],earrings:['BEZ NÁUŠNIC','KROUŽKY']};
   const avatarDefaults={head:0,skin:0,hair:0,hairColor:0,top:0,color:0,pants:0,shoes:0,accessory:0,ride:1,earrings:1};
-  function defaultAvatar(choice){return {...avatarDefaults,hair:choice==='djane'?5:0,earrings:choice==='djane'?1:0};}
+  function defaultAvatar(choice){const definition=characterDefinitions[choice];return {...avatarDefaults,hair:definition.hair,earrings:definition.earrings};}
   function restoreAvatar(choice,value){
     const look=defaultAvatar(choice);
     if(value&&typeof value==='object')for(const key of Object.keys(look)){
@@ -541,8 +551,8 @@ body::before{opacity:.08}
   // Each character owns its appearance; switching only selects an existing profile.
   const characterAvatars={dj:defaultAvatar('dj'),djane:defaultAvatar('djane')};
   try{
-    const saved=JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-character-avatars-v2')||'null');
-    if(saved&&typeof saved==='object'){
+    const saved=savedCharacterState?.profiles||JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-character-avatars-v2')||'null');
+    if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
       for(const choice of ['dj','djane'])characterAvatars[choice]=restoreAvatar(choice,saved[choice]);
     }else{
       // The old shared appearance belongs to the character selected when it was saved.
@@ -550,6 +560,7 @@ body::before{opacity:.08}
     }
   }catch(_){}
   let avatar=characterAvatars[character];
+  function currentAppearance(choice=character){return {...characterAvatars[choice],character:choice};}
   const hairColors=['#24202c','#68412e','#dbc17c','#e8589d'];
   const skins=['#e5ad9b','#c58b60','#955e3e','#593b30'];
   const topColors=['#252a34','#ae2434','#25746e','#705099'];
@@ -558,7 +569,7 @@ body::before{opacity:.08}
   let selectedRound=1,runStartDistance=0;
   let rngSeed=0x38524944;
   function rand() {rngSeed=(Math.imul(rngSeed,1664525)+1013904223)>>>0;return rngSeed/4294967296;}
-  const state={ mode:'menu',character,t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,jumpHeld:false,player:{y:0,vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]},lastScoreDraw:-1 };
+  const state={ mode:'menu',appearance:null,t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,jumpHeld:false,player:{y:0,vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]},lastScoreDraw:-1 };
   const fmt=n=>String(Math.floor(Math.max(0,n))).padStart(6,'0');
   function playerX(){return W<600?W*.245:W*.285;}
   // Continuous 174 BPM phase: unlike the old sawtooth pulse, this is C1-smooth
@@ -669,7 +680,8 @@ body::before{opacity:.08}
     el.toast.textContent=txt;el.toast.className='toast';void el.toast.offsetWidth;el.toast.classList.add('show');if(danger)el.toast.classList.add('danger');
   }
   function reset(){
-    window.phaseLeaderboard.begin({character:state.character,...avatar});
+    state.appearance=currentAppearance();
+    window.phaseLeaderboard.begin(state.appearance);
     rngSeed=0x38524944;
     const elapsed=(selectedRound-1)*ROUND_DURATION;
     const position=routePosition(elapsed);
@@ -699,6 +711,7 @@ body::before{opacity:.08}
 
   function finishStartLoading(){
     startPending=false;el.start.disabled=false;el.start.removeAttribute('aria-busy');
+    characterButtons.forEach(button=>button.disabled=false);$('customizeAvatar').disabled=false;
     if(startButtonLabel)el.start.innerHTML=startButtonLabel;
   }
   async function start(){
@@ -707,6 +720,7 @@ body::before{opacity:.08}
     if(state.mode==='running')pause();
     const token=++startToken;
     startPending=true;startButtonLabel=el.start.innerHTML;
+    characterButtons.forEach(button=>button.disabled=true);$('customizeAvatar').disabled=true;
     el.start.disabled=true;el.start.setAttribute('aria-busy','true');
     el.start.textContent='NAČÍTÁM HUDBU…';$('playSilentBtn').hidden=true;
     try{
@@ -1132,17 +1146,18 @@ body::before{opacity:.08}
   }
   function drawDJ(target=ctx,preview=false,appearance=null){
     const ctx=target;
-    const look={...avatarDefaults,...(appearance||avatar)};
+    const look={...avatarDefaults,...(appearance||(preview?currentAppearance():state.appearance||currentAppearance()))};
+    const definition=characterDefinitions[look.character];
     const roundedRect=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);};
     const p=preview?{grounded:true,invuln:0,angle:appearance?0:Math.sin(state.t)*.025}:state.player;
     const x=preview?120:playerX(), y=preview?226:p.y;
     const travel=preview?(appearance?0:state.t*2):state.distance*.047;
-    const isDjane=(appearance?appearance.character:state.character)==='djane';
+    const isDjane=look.character==='djane';
     const blinkTime=p.recoveryUntil!=null?state.elapsed:p.invuln;
     if(p.invuln>0&&Math.floor(blinkTime*13)%2===0)return;
     const jacket=topColors[look.color];
-    const accent=isDjane?'#ef5eae':'#f43b46';
-    const headset=isDjane?'#b4ffe3':'#f22f3a';
+    const accent=definition.accent;
+    const headset=definition.headset;
     const skin=skins[look.skin];
     const hairColor=hairColors[look.hairColor];
     const hair=look.hair;
@@ -1202,7 +1217,7 @@ body::before{opacity:.08}
     ctx.fillStyle=look.shoes===3?'#9ca1a8':'#e0e1e4';ctx.fillRect(-15+run*.35,-13,12,2);ctx.fillRect(4-run*.35,-13,13,2);
     // Each garment has its own silhouette and details at game scale.
     const top=look.top;
-    const shoulder=isDjane?14:16;
+    const shoulder=definition.shoulder;
     ctx.fillStyle=skin;roundedRect(-5,-68,10,9,3);ctx.fill();
     if(top===1){
       ctx.fillStyle=jacket;ctx.beginPath();ctx.ellipse(0,-62,16,11,0,0,TAU);ctx.fill();
@@ -1346,7 +1361,7 @@ body::before{opacity:.08}
     }
     if(look.accessory===3){ctx.strokeStyle='#e6bc68';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-9,-59);ctx.quadraticCurveTo(0,-42,9,-59);ctx.stroke();ctx.fillStyle='#e6bc68';ctx.fillRect(-2,-49,4,5);}
     ctx.restore();
-    if(!preview&&W>420)print(isDjane?'DJANE':'DJ',0,-108,8,isDjane?'#b4ffe3':'#ff818b','center',700);
+    if(!preview&&W>420)print(definition.label,0,-108,8,definition.headset,'center',700);
     if(!preview&&state.phaseFlash>0){ctx.globalAlpha=state.phaseFlash;print('SYNC',0,-123,10,'#b4ffe3','center',800);}
     ctx.restore();
   }
@@ -1668,7 +1683,7 @@ body::before{opacity:.08}
     const look={character:value.character};
     for(const key of Object.keys(avatarDefaults)){
       if(key==='ride'&&value[key]===undefined){look[key]=avatarDefaults.ride;continue;}
-      if(key==='earrings'&&value[key]===undefined){look[key]=value.character==='djane'?1:0;continue;}
+      if(key==='earrings'&&value[key]===undefined){look[key]=characterDefinitions[value.character].earrings;continue;}
       if(!Number.isInteger(value[key])||value[key]<0||value[key]>=avatarOptions[key].length)return null;
       look[key]=value[key];
     }
@@ -1682,10 +1697,11 @@ body::before{opacity:.08}
     for(const button of characterButtons){
       const canvas=button.querySelector('.character-portrait');
       const choice=button.dataset.character;
-      const look=characterAvatars[choice];
+      button.querySelector('strong').textContent=characterDefinitions[choice].label;
+      button.setAttribute('aria-label','Hrát jako '+characterDefinitions[choice].label);
       const portrait=document.createElement('canvas');portrait.width=480;portrait.height=520;
       const source=portrait.getContext('2d');source.scale(2,2);
-      drawDJ(source,true,{...look,character:choice});
+      drawDJ(source,true,currentAppearance(choice));
       const c=canvas.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,480,520);
       c.drawImage(portrait,80,20,320,480,85,28,310,464);
     }
@@ -1693,18 +1709,28 @@ body::before{opacity:.08}
   syncCharacterPortraits();
   const avatarDialog=$('avatarDialog');
   const avatarLabels={base:'POSTAVA',head:'HLAVA',skin:'PLEŤ',hair:'ÚČES',hairColor:'BARVA VLASŮ',top:'VRŠEK',color:'BARVA VRŠKU',pants:'KALHOTY',shoes:'BOTY',accessory:'DALŠÍ DOPLNĚK',ride:'NA ČEM JEDEŠ',earrings:'NÁUŠNICE'};
-  function saveAvatar(){characterAvatars[character]=avatar;syncCharacterPortraits();try{localStorage.setItem('zvuq-test-v1-zvuq-character-avatars-v2',JSON.stringify(characterAvatars));}catch(_){} }
+  function saveAvatar(){
+    characterAvatars[character]=avatar;
+    syncCharacterPortraits();
+    try{localStorage.setItem('zvuq-test-v1-zvuq-character-state-v3',JSON.stringify({version:3,selected:character,profiles:characterAvatars}));}catch(_){}
+  }
   let avatarPreviewFrame=0;
   avatarDialog.addEventListener('close',()=>{cancelAnimationFrame(avatarPreviewFrame);avatarPreviewFrame=0;});
-  function previewAvatar(){if(!avatarDialog.open)return;const c=$('avatarCanvas').getContext('2d');c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,240,260);c.strokeStyle='#f12730';c.lineWidth=2;c.beginPath();for(let x=0;x<=240;x++){const y=226+Math.sin(x*.04+state.t)*4;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();drawDJ(c,true);avatarPreviewFrame=requestAnimationFrame(previewAvatar);}
-  function syncAvatarControls(){for(const [key,options] of Object.entries(avatarOptions))$('avatar-'+key).value=String(key==='base'?(state.character==='djane'?1:0):avatar[key]);$('avatarSummary').textContent=avatarOptions.hair[avatar.hair]+' · '+avatarOptions.ride[avatar.ride];}
+  function previewAvatar(){if(!avatarDialog.open)return;const c=$('avatarCanvas').getContext('2d');c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,240,260);c.strokeStyle='#f12730';c.lineWidth=2;c.beginPath();for(let x=0;x<=240;x++){const y=226+Math.sin(x*.04+state.t)*4;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();drawDJ(c,true,currentAppearance());avatarPreviewFrame=requestAnimationFrame(previewAvatar);}
+  function syncAvatarControls(){
+    const name=characterDefinitions[character].label;
+    for(const key of Object.keys(avatarOptions))$('avatar-'+key).value=String(key==='base'?character:avatar[key]);
+    $('avatarTitle').textContent='ÚPRAVA POSTAVY / '+name;
+    $('avatarCanvas').setAttribute('aria-label','Náhled postavy '+name);
+    $('avatarSummary').textContent=name+' · '+avatarOptions.hair[avatar.hair]+' · '+avatarOptions.ride[avatar.ride];
+  }
   const avatarGroups=[['POSTAVA',['base','head','skin']],['VLASY',['hair','hairColor']],['OBLEČENÍ',['top','color','pants','shoes']],['DOPLŇKY',['earrings','accessory']],['JÍZDA',['ride']]];
   for(const [name,keys] of avatarGroups){const group=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=name;group.append(legend);$('avatarControls').append(group);
-  for(const key of keys){const options=avatarOptions[key];const label=document.createElement('label');label.textContent=avatarLabels[key];label.htmlFor='avatar-'+key;const select=document.createElement('select');select.id='avatar-'+key;options.forEach((name,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=name;select.append(option);});select.addEventListener('change',()=>{if(key==='base'){chooseCharacter(Number(select.value)?'djane':'dj');}else{avatar[key]=Number(select.value);saveAvatar();syncAvatarControls();}});label.append(select);group.append(label);}}
-  $('customizeAvatar').addEventListener('click',()=>{if(state.mode!=='menu'&&state.mode!=='over')return;syncAvatarControls();avatarDialog.showModal();previewAvatar();});
+  for(const key of keys){const options=avatarOptions[key];const label=document.createElement('label');label.textContent=avatarLabels[key];label.htmlFor='avatar-'+key;const select=document.createElement('select');select.id='avatar-'+key;const choices=key==='base'?Object.entries(characterDefinitions).map(([id,definition])=>[id,definition.label]):options.map((name,i)=>[String(i),name]);for(const [value,name]of choices){const option=document.createElement('option');option.value=value;option.textContent=name;select.append(option);}select.addEventListener('change',()=>{if(!canEditAvatar()){syncAvatarControls();return;}if(key==='base'){chooseCharacter(select.value);}else{avatar[key]=Number(select.value);saveAvatar();syncAvatarControls();}});label.append(select);group.append(label);}}
+  $('customizeAvatar').addEventListener('click',()=>{if(!canEditAvatar())return;syncAvatarControls();avatarDialog.showModal();previewAvatar();});
   $('closeAvatar').addEventListener('click',()=>avatarDialog.close());
-  $('randomAvatar').addEventListener('click',()=>{for(const key of Object.keys(avatar))avatar[key]=Math.floor(Math.random()*avatarOptions[key].length);saveAvatar();syncAvatarControls();});
-  $('resetAvatar').addEventListener('click',()=>{avatar=defaultAvatar(character);saveAvatar();syncAvatarControls();});
+  $('randomAvatar').addEventListener('click',()=>{if(!canEditAvatar())return;for(const key of Object.keys(avatar))avatar[key]=Math.floor(Math.random()*avatarOptions[key].length);saveAvatar();syncAvatarControls();});
+  $('resetAvatar').addEventListener('click',()=>{if(!canEditAvatar())return;avatar=defaultAvatar(character);saveAvatar();syncAvatarControls();});
   const leaderDialog=$('leaderDialog');
   function openLeaderboard(){
     if(state.mode==='running')pause();
@@ -1787,7 +1813,7 @@ body::before{opacity:.08}
   // Start the transfer in the menu; browsers may keep audio locked until Start.
   fetchMusicBytes().catch(error=>console.warn('Přednačtení hudby:',error));
   setCover(true);updateHud();raf=requestAnimationFrame(loop);
-  window.__zvuqGame={getState:()=>({mode:state.mode,score:Math.floor(state.score+(state.distance-runStartDistance)*.095),distance:state.distance,round:state.round,hearts:state.hearts,grounded:state.player.grounded,vy:state.player.vy,y:state.player.y,speed:state.speed,jumpHeld:state.jumpHeld,musicDecoded:!!songBuffer,musicPlaying:!!songSource,elapsed:state.elapsed,transportTime:transportPosition(),transportKind:transport?transport.kind:null,character:state.character,musicDuration:songBuffer?Math.round(songBuffer.duration*100)/100:0}),start,jump,pause};
+  window.__zvuqGame={getState:()=>({mode:state.mode,score:Math.floor(state.score+(state.distance-runStartDistance)*.095),distance:state.distance,round:state.round,hearts:state.hearts,grounded:state.player.grounded,vy:state.player.vy,y:state.player.y,speed:state.speed,jumpHeld:state.jumpHeld,musicDecoded:!!songBuffer,musicPlaying:!!songSource,elapsed:state.elapsed,transportTime:transportPosition(),transportKind:transport?transport.kind:null,character:(state.mode==='running'||state.mode==='paused')?state.appearance.character:character,musicDuration:songBuffer?Math.round(songBuffer.duration*100)/100:0}),start,jump,pause};
 })();
 </script>
 <!-- Test build: analytics intentionally disabled. -->

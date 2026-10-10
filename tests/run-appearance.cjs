@@ -1,0 +1,55 @@
+const { chromium } = require('playwright');
+const assert = require('node:assert/strict');
+const base = process.env.ZVUQ_TEST_URL || 'http://127.0.0.1:8090/game/';
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] });
+  const page = await browser.newPage();
+  let releaseMusic;
+  const gate = new Promise(resolve => { releaseMusic = resolve; });
+  await page.route('**/assets/phase-rider-loop.mp3', async route => { await gate; await route.abort(); });
+  await page.goto(base);
+  const cards = () => page.locator('.character-portrait').evaluateAll(cs => cs.map(c => c.toDataURL()));
+  const initial = await cards();
+  await page.locator('#startBtn').click();
+  await page.waitForFunction(() => document.getElementById('startBtn').disabled);
+  assert.equal(await page.locator('#customizeAvatar').isDisabled(), true);
+  assert.equal(await page.locator('[data-character="djane"]').isDisabled(), true);
+  await page.evaluate(() => {
+    const base = document.getElementById('avatar-base');
+    base.value = 'djane';
+    base.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  assert.equal(await page.locator('#avatar-base').inputValue(), 'dj');
+  assert.deepEqual(await cards(), initial);
+  releaseMusic();
+  await page.waitForFunction(() => !document.getElementById('startBtn').disabled);
+  assert.equal(await page.locator('#customizeAvatar').isDisabled(), false);
+  await page.locator('[data-character="djane"]').click();
+  await page.locator('#customizeAvatar').click();
+  await page.locator('#avatar-hair').selectOption('7');
+  await page.locator('#closeAvatar').click();
+  await page.evaluate(() => {
+    const begin = window.phaseLeaderboard.begin;
+    window.phaseLeaderboard.begin = value => { window.runLook = structuredClone(value); return begin(value); };
+    document.getElementById('playSilentBtn').click();
+  });
+  await page.waitForFunction(() => window.__zvuqGame.getState().mode === 'running');
+  const expected = await page.evaluate(() => window.runLook);
+  assert.equal(expected.character, 'djane');
+  assert.equal(expected.hair, 7);
+  await page.locator('#endTestBtn').click();
+  await page.locator('[data-character="dj"]').click();
+  await page.locator('#customizeAvatar').click();
+  await page.locator('#randomAvatar').click();
+  await page.locator('#closeAvatar').click();
+  await page.locator('#openLeaderboard').click();
+  await page.locator('#nickname').fill('Snapshot check');
+  await page.locator('#submitScore').click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('zvuq-test-v1-phase-local-scores') || '[]').length > 0);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('zvuq-test-v1-phase-local-scores'))[0].avatar);
+  assert.deepEqual(saved, expected, 'Changing the next character altered the completed run score');
+  assert.equal(await page.locator('.leader-face').count(), 1);
+  console.log('PASS: selection locked during loading, restored after audio error, silent start and unchanged score appearance after subsequent edits');
+  await browser.close();
+})().catch(error => { console.error(error); process.exit(1); });
