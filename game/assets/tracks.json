@@ -1,0 +1,49 @@
+{
+  "tracks": [
+    {
+      "id": "zvuq-demo",
+      "file": "assets/mraq-smelly-guy.mp3",
+      "artist": "Mraq",
+      "title": "Phase Rider / demo loop",
+      "bpm": 174,
+      "trackUrl": "https://zvuq.cz/",
+      "profileUrl": "https://www.facebook.com/zvuqzvuq"
+    },
+    {
+      "id": "track-02",
+      "file": "assets/cyber-pulse.mp3",
+      "artist": "Vektor",
+      "title": "Cyber Pulse",
+      "bpm": 172,
+      "trackUrl": "https://zvuq.cz/tracks/cyber-pulse",
+      "profileUrl": "https://www.facebook.com/zvuqzvuq"
+    },
+    {
+      "id": "track-03",
+      "file": "assets/subterranean.mp3",
+      "artist": "SubTerra Sound",
+      "title": "Deep Core",
+      "bpm": 175,
+      "trackUrl": "https://zvuq.cz/tracks/deep-core",
+      "profileUrl": "https://www.facebook.com/zvuqzvuq"
+    },
+    {
+      "id": "track-04",
+      "file": "assets/acid-rain.mp3",
+      "artist": "Kryptek",
+      "title": "Acid Rain VIP",
+      "bpm": 178,
+      "trackUrl": "https://zvuq.cz/tracks/acid-rain",
+      "profileUrl": "https://www.facebook.com/zvuqzvuq"
+    },
+    {
+      "id": "track-05",
+      "file": "assets/neotekk-nightmare.mp3",
+      "artist": "Tekk Mechanix",
+      "title": "Neotekk Nightmare",
+      "bpm": 185,
+      "trackUrl": "https://zvuq.cz/tracks/neotekk-nightmare",
+      "profileUrl": "https://www.facebook.com/zvuqzvuq"
+    }
+  ]
+}
