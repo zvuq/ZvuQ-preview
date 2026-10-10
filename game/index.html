@@ -772,7 +772,7 @@ body::before{opacity:.08}
   }
   function performJump(){
     const p=state.player;
-    if(p.recoveryUntil!==null||p.buffer<=0||(!p.grounded&&p.coyote<=0))return;
+    if(p.buffer<=0||(!p.grounded&&p.coyote<=0))return;
     const phase=(state.elapsed%BEAT)/BEAT;
     const diff=Math.min(phase,1-phase)*BEAT;
     const perfect=diff<.09;
