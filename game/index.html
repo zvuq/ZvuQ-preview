@@ -287,6 +287,12 @@ body::before{opacity:.08}
 <style>
 .loading-status{margin:12px 0 0;color:var(--muted);font:500 10px/1.5 var(--mono);letter-spacing:.06em}
 #playSilentBtn{margin-top:10px}
+.test-levels{flex-shrink:0;min-width:0}
+.test-levels h2{margin:0 0 5px;color:var(--muted);font:600 10px var(--mono);letter-spacing:.08em}
+.level-buttons{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px}
+.level-buttons button{min-height:44px;justify-content:center;padding:8px}
+.level-buttons button[aria-pressed="true"]{border-color:var(--red);background:#36171b;color:#fff}
+@media(max-width:660px){.level-buttons{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .start-btn:disabled{cursor:wait;opacity:.75;transform:none}
 </style>
 <style>#lives{font:700 28px var(--mono);color:var(--red)}.site-nav>span{font:600 10px var(--mono);color:var(--muted);letter-spacing:.1em}</style>
@@ -314,6 +320,7 @@ body::before{opacity:.08}
       </button>
     </div>
   </div>
+  <section class="test-levels" id="testLevels" aria-labelledby="testLevelsTitle"><h2 id="testLevelsTitle">TESTOVAT KOLO</h2><div class="level-buttons" role="group" aria-label="Výběr počátečního kola"><button class="utility" type="button" data-test-round="1" aria-pressed="true" aria-label="Začít v kole 1">1</button><button class="utility" type="button" data-test-round="2" aria-pressed="false" aria-label="Začít v kole 2">2</button><button class="utility" type="button" data-test-round="3" aria-pressed="false" aria-label="Začít v kole 3">3</button><button class="utility" type="button" data-test-round="4" aria-pressed="false" aria-label="Začít v kole 4">4</button><button class="utility" type="button" data-test-round="5" aria-pressed="false" aria-label="Začít v kole 5">5</button><button class="utility" type="button" data-test-round="6" aria-pressed="false" aria-label="Začít v kole 6">6</button><button class="utility" type="button" data-test-round="7" aria-pressed="false" aria-label="Začít v kole 7">7</button><button class="utility" type="button" data-test-round="8" aria-pressed="false" aria-label="Začít v kole 8">8</button><button class="utility" type="button" data-test-round="9" aria-pressed="false" aria-label="Začít v kole 9">9</button><button class="utility" type="button" data-test-round="10" aria-pressed="false" aria-label="Začít v kole 10">10</button><button class="utility" type="button" data-test-round="11" aria-pressed="false" aria-label="Začít v kole 11">11</button><button class="utility" type="button" data-test-round="12" aria-pressed="false" aria-label="Začít v kole 12">12</button></div></section>
   <main class="gamebox" id="gamebox" aria-label="Hra Phase Rider, DJ běží po zvukové vlně">
     <button class="utility fullscreen-pause" id="fullscreenPauseBtn" type="button" aria-label="Pozastavit hru" title="Pauza" hidden>II</button>
     <div class="stage-progress" aria-hidden="true"><i id="stageProgress"></i></div>
@@ -548,6 +555,7 @@ body::before{opacity:.08}
   const topColors=['#252a34','#ae2434','#25746e','#705099'];
   const pantColors=['#a8a5aa','#41668b','#555c42','#23252d'];
   const shoeColors=['#eeeeee','#f43b46','#b4ffe3','#17191f'];
+  let selectedRound=1,runStartDistance=0;
   let rngSeed=0x38524944;
   function rand() {rngSeed=(Math.imul(rngSeed,1664525)+1013904223)>>>0;return rngSeed/4294967296;}
   const state={ mode:'menu',character,t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,jumpHeld:false,player:{y:0,vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]},lastScoreDraw:-1 };
@@ -646,7 +654,7 @@ body::before{opacity:.08}
   }
   function updateHud(){
     syncFullscreenPause();
-    const displayedScore=Math.floor(state.score+state.distance*.095);
+    const displayedScore=Math.floor(state.score+(state.distance-runStartDistance)*.095);
     if(displayedScore!==state.lastScoreDraw){el.score.textContent=fmt(displayedScore);state.lastScoreDraw=displayedScore;}
     el.combo.textContent='×'+String(state.combo).padStart(2,'0');
     el.lives.textContent='∞';
@@ -663,8 +671,11 @@ body::before{opacity:.08}
   function reset(){
     window.phaseLeaderboard.begin({character:state.character,...avatar});
     rngSeed=0x38524944;
-    Object.assign(state,{mode:'running',t:0,elapsed:0,distance:0,speed:240,round:1,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,lastScoreDraw:-1,jumpHeld:false});
-    Object.assign(state.player,{y:waveY(0,0),vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]});
+    const elapsed=(selectedRound-1)*ROUND_DURATION;
+    const position=routePosition(elapsed);
+    runStartDistance=position.distance;
+    Object.assign(state,{mode:'running',t:elapsed,elapsed,distance:position.distance,speed:position.speed,round:selectedRound,roundFlash:0,score:0,combo:1,hearts:Infinity,lastBeat:-1,nextSpawn:880,hazards:[],items:[],particles:[],texts:[],shake:0,flash:0,phaseFlash:0,lastScoreDraw:-1,jumpHeld:false});
+    Object.assign(state.player,{y:waveY(state.distance,state.t),vy:0,holdAge:0,grounded:true,coyote:0,buffer:0,invuln:0,recoveryUntil:null,angle:0,trail:[]});
     makeHazards();
     el.stageBanner.classList.remove('show');
     el.heading.classList.remove('pause-heading');
@@ -681,6 +692,7 @@ body::before{opacity:.08}
     const showChoice=visible&&(state.mode==='menu'||state.mode==='over');
     el.characterSelect.hidden=!showChoice;
     el.characterLabel.hidden=!showChoice;
+    $('testLevels').hidden=!showChoice;
   }
 
   function finishStartLoading(){
@@ -729,7 +741,7 @@ body::before{opacity:.08}
     state.mode='over';releaseJump();stopMusic();
     state.shake=0;state.flash=0;state.phaseFlash=0;
     state.player.invuln=0;state.player.recoveryUntil=null;state.player.grounded=true;state.player.trail=[];
-    const total=Math.floor(state.score+state.distance*.095);
+    const total=Math.floor(state.score+(state.distance-runStartDistance)*.095);
     window.phaseLeaderboard.finish({score:total,round:state.round,duration:state.elapsed,distance:state.distance});
     if(total>best){best=total;try{localStorage.setItem('zvuq-test-v1-zvuq-phase-rider-bars8-best',String(best));}catch(_){}}
     el.coverTop.textContent='TEST // UKONČENO';
@@ -1675,6 +1687,12 @@ body::before{opacity:.08}
   const coverObserver=new ResizeObserver(fitCover);
   coverObserver.observe(el.box);coverObserver.observe(coverPanel);
   fitCover();
+  const testRoundButtons=[...document.querySelectorAll('[data-test-round]')];
+  testRoundButtons.forEach(button=>button.addEventListener('click',()=>{
+    if(startPending||(state.mode!=='menu'&&state.mode!=='over'))return;
+    selectedRound=Number(button.dataset.testRound);
+    testRoundButtons.forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
+  }));
   el.start.addEventListener('click',start);
   $('playSilentBtn').addEventListener('click',()=>{userMuted=true;audioEnabled=false;syncAudioButton();start();});
   el.audio.addEventListener('click',toggleAudio);
@@ -1728,7 +1746,7 @@ body::before{opacity:.08}
   // Start the transfer in the menu; browsers may keep audio locked until Start.
   fetchMusicBytes().catch(error=>console.warn('Přednačtení hudby:',error));
   updateHud();raf=requestAnimationFrame(loop);
-  window.__zvuqGame={getState:()=>({mode:state.mode,score:Math.floor(state.score+state.distance*.095),distance:state.distance,round:state.round,hearts:state.hearts,grounded:state.player.grounded,vy:state.player.vy,y:state.player.y,speed:state.speed,jumpHeld:state.jumpHeld,musicDecoded:!!songBuffer,musicPlaying:!!songSource,elapsed:state.elapsed,transportTime:transportPosition(),transportKind:transport?transport.kind:null,character:state.character,musicDuration:songBuffer?Math.round(songBuffer.duration*100)/100:0}),start,jump,pause};
+  window.__zvuqGame={getState:()=>({mode:state.mode,score:Math.floor(state.score+(state.distance-runStartDistance)*.095),distance:state.distance,round:state.round,hearts:state.hearts,grounded:state.player.grounded,vy:state.player.vy,y:state.player.y,speed:state.speed,jumpHeld:state.jumpHeld,musicDecoded:!!songBuffer,musicPlaying:!!songSource,elapsed:state.elapsed,transportTime:transportPosition(),transportKind:transport?transport.kind:null,character:state.character,musicDuration:songBuffer?Math.round(songBuffer.duration*100)/100:0}),start,jump,pause};
 })();
 </script>
 <!-- Test build: analytics intentionally disabled. -->
