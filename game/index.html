@@ -66,7 +66,9 @@
     .life {display:block;width:18px;height:17px;background:var(--red);clip-path:polygon(0 0,40% 0,50% 20%,60% 0,100% 0,100% 56%,50% 100%,0 56%);filter:drop-shadow(0 0 3px red)}
     .life.lost {background:#3a2529}
     .game-footer {position:absolute;inset:auto 0 0;z-index:3;padding:14px 24px 19px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;pointer-events:none;background:linear-gradient(transparent,rgba(8,9,11,.80));font:600 9px var(--mono);letter-spacing:.13em;color:#79767b}
-    .foot-info {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .foot-info {display:flex;align-items:center;gap:5px 16px;flex-wrap:wrap;line-height:1.5;min-width:0}
+    .foot-info span {max-width:100%}
+    @media(max-width:780px){.foot-info{display:grid;gap:3px;font-size:8px;letter-spacing:.04em}.game-footer{gap:8px}}
     .foot-info b {color:#e6dfdf;font-weight:600}
     .beat-line {display:flex;align-items:center;gap:10px;white-space:nowrap}
     .beat-track {display:flex;gap:4px}
@@ -293,49 +295,49 @@ body::before{opacity:.08}
 <header class="topbar">
   <a class="identity" href="#gamebox" aria-label="Testovací hra Phase Rider" title="PHASE RIDER / TEST">
     <img class="brand-mark" src="../assets/Zvuq_logo_white.png" alt="ZvuQ logo">
-    <span class="brand-copy">ZVUQ / SOUND ENGINEER</span>
+    <span class="brand-copy">ZVUQ</span>
   </a>
 <nav class="site-nav" aria-label="Testovací verze"><span>TEST / NEOMEZENÉ ŽIVOTY</span></nav>
 </header>
 <div class="app">
   <div class="page-title">
-    <div class="game-title"><span class="kicker">PHASE RIDER // SOUNDWAVE PLATFORMER</span><span class="right">BUILD 05.00 / TEST</span></div>
+    <div class="game-title"><span class="kicker">PHASE RIDER</span><span class="right">TEST</span></div>
     <div class="top-actions">
       <span class="top-tag"><i></i>TEST / LOKÁLNÍ SKÓRE</span>
       <button class="utility" id="endTestBtn" type="button" disabled>UKONČIT TEST</button>
       <button class="utility" id="audioBtn" type="button" aria-label="Zapnout nebo vypnout hudbu" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6m0-6l-5 6" id="muteIcon"/></svg><span id="audioLabel">AUDIO OFF</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6m0-6l-5 6" id="muteIcon"/></svg><span id="audioLabel">ZVUK VYPNUTÝ</span>
       </button>
-      <button class="utility mobile-pause" id="pauseBtn" type="button" aria-label="Pozastavit hru" aria-pressed="false" disabled><span aria-hidden="true">Ⅱ</span><span class="t">PAUZA</span></button>
+      <button class="utility mobile-pause" id="pauseBtn" type="button" aria-label="Pozastavit hru" aria-pressed="false" disabled><span aria-hidden="true">II</span><span class="t">PAUZA</span></button>
       <button class="utility" id="fullscreenBtn" type="button" aria-label="Celá obrazovka">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><span class="t">FULLSCREEN</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><span class="t">CELÁ OBRAZOVKA</span>
       </button>
     </div>
   </div>
   <main class="gamebox" id="gamebox" aria-label="Hra Phase Rider, DJ běží po zvukové vlně">
-    <button class="utility fullscreen-pause" id="fullscreenPauseBtn" type="button" aria-label="Pozastavit hru" title="Pauza" hidden>Ⅱ</button>
+    <button class="utility fullscreen-pause" id="fullscreenPauseBtn" type="button" aria-label="Pozastavit hru" title="Pauza" hidden>II</button>
     <div class="stage-progress" aria-hidden="true"><i id="stageProgress"></i></div>
     <canvas id="game" aria-label="Herní plocha: běž po zvukové vlně, skákej přes výpadky a přebuzení"></canvas>
     <div class="game-header">
-      <div class="osc-status"><span class="live-dot"></span><span id="statusText">STAV / PŘIPRAVEN</span><small>ZVUQ / PHASE RIDER<br>RYTMICKÁ PLOŠINOVKA / 174 BPM</small><div class="stage-info"><span id="stageNum">KOLO 01 / 08</span><b id="stageName">SOUND CHECK</b></div></div>
+      <div class="osc-status"><span class="live-dot"></span><span id="statusText">STAV / PŘIPRAVEN</span><div class="stage-info"><span id="stageNum">KOLO 01 / 08</span><b id="stageName">SOUND CHECK</b></div></div>
       <div class="hud">
-        <div class="hud-cell"><label>SCORE / PTS</label><div class="value" id="score">000000</div></div>
-        <div class="hud-cell"><label>PHASE / COMBO</label><div class="value accent" id="combo">×01</div></div>
+        <div class="hud-cell"><label>SKÓRE</label><div class="value" id="score">000000</div></div>
+        <div class="hud-cell"><label>KOMBO</label><div class="value accent" id="combo">×01</div></div>
         <div class="hud-cell"><label>ŽIVOTY / TEST</label><div class="lives" id="lives" aria-label="Neomezené životy">∞</div></div>
       </div>
     </div>
     <div class="game-footer">
-      <div class="foot-info"><span>KRÁTKÝ STISK = <b>NÍZKÝ SKOK</b></span><span class="desktop-only">/</span><span class="desktop-only">PODRŽENÍ = <b>VYSOKÝ SKOK</b></span></div>
+      <div class="foot-info" aria-label="Ovládání hry"><span>KRÁTKÝ STISK = <b>NÍZKÝ SKOK</b></span><span>PODRŽENÍ = <b>VYSOKÝ SKOK</b></span><span id="pauseHint"><b>P</b> / PAUZA = <b>PAUZA / POKRAČOVAT</b></span></div>
       <div class="beat-line"><span id="bpmText">174 BPM</span><span class="beat-track" id="beatTrack"><span></span><span></span><span></span><span></span></span></div>
     </div>
     <div class="toast" id="toast" aria-live="polite"></div>
-    <div class="stage-banner" id="stageBanner" role="status" aria-live="polite"><small id="stageCaption">KOLO 01 / 08</small><strong id="stageTitle">SOUND CHECK</strong><span id="stageDescription">ZÁKLADNÍ SIGNÁL / RYTMUS</span></div>
-    <div class="mobile-actions"><button type="button" class="jump-btn" id="jumpBtn" aria-label="Skok, podrž pro delší skok"><span>↑</span>JUMP</button></div>
+    <div class="stage-banner" id="stageBanner" role="status" aria-live="polite"><small id="stageCaption">KOLO 01 / 08</small><strong id="stageTitle">SOUND CHECK</strong><span id="stageDescription">ZÁKLADNÍ PŘEKÁŽKY</span></div>
+    <div class="mobile-actions"><button type="button" class="jump-btn" id="jumpBtn" aria-label="Skok, podrž pro delší skok"><span>↑</span>SKOK</button></div>
     <div class="cover" id="cover">
       <div class="cover-panel">
-        <div class="cover-top" id="coverTop">ZVUQ // ORIGINAL ARCADE</div>
+        <div class="cover-top" id="coverTop">TESTOVACÍ HRA</div>
         <h1 id="coverHeading">PHASE <em>RIDER.</em></h1>
-        <p class="intro" id="coverIntro">Vlna je tvoje pódium. Každé další kolo přidá rychlost, širší výpadky a hustší překážky. Časuj odraz do beatu.</p>
+        <p class="intro" id="coverIntro">Skákej přes překážky a mezery. Každé kolo je rychlejší a obtížnější. Životy jsou neomezené.</p>
 
         <div class="character-label" id="characterLabel">// ZVOL SI POSTAVU</div>
         <div class="character-select" id="characterSelect" role="group" aria-label="Výběr postavy">
@@ -353,7 +355,7 @@ body::before{opacity:.08}
               <path d="M22 34q7 4 14 0" fill="none" stroke="#7a4f48" stroke-width="1.8" stroke-linecap="round"/>
               <path d="M22 24q2-2 5 0m4 0q2-2 5 0" fill="none" stroke="#1c2028" stroke-width="1.4" stroke-linecap="round"/>
             </svg>
-            <span class="character-copy"><strong>DJ</strong><small>DECK / 01</small></span>
+            <span class="character-copy"><strong>DJ</strong></span>
           </button>
           <button type="button" class="character-card" data-character="djane" aria-pressed="false" aria-label="Hrát jako DJANE">
             <svg class="character-portrait" viewBox="0 0 58 63" aria-hidden="true" focusable="false">
@@ -370,36 +372,36 @@ body::before{opacity:.08}
               <path d="M24 37q5 4 10 0" fill="none" stroke="#cc5d7c" stroke-width="2" stroke-linecap="round"/>
               <path d="M20 22q4 3 9 3 6 0 10-3" fill="none" stroke="#7f4153" stroke-width="1.4" stroke-linecap="round"/>
             </svg>
-            <span class="character-copy"><strong>DJANE</strong><small>DECK / 02</small></span>
+            <span class="character-copy"><strong>DJANE</strong></span>
           </button>
-        <button type="button" class="utility customize-avatar" id="customizeAvatar">UPRAVIT POSTAVU / MIX YOUR STYLE ↗</button>
+        <button type="button" class="utility customize-avatar" id="customizeAvatar">UPRAVIT POSTAVU</button>
 </div>
-        <button type="button" class="start-btn" id="startBtn">SPUSTIT SET <span class="arrow">→</span></button>
+        <button type="button" class="start-btn" id="startBtn">SPUSTIT HRU <span class="arrow">→</span></button>
         <p id="loadingStatus" class="loading-status" role="status" aria-live="polite" hidden></p>
         <button type="button" class="utility" id="playSilentBtn" hidden>HRÁT BEZ ZVUKU</button>
         <div class="instructions" id="instructions">
-          <div class="control-tip"><kbd>SPACE</kbd><label>TAP / DRŽET</label></div>
+          <div class="control-tip"><kbd>SPACE</kbd><label>STISK / PODRŽENÍ</label></div>
           <div class="control-tip"><kbd>↑</kbd><label>SKOK</label></div>
           <div class="control-tip"><kbd>P</kbd><label>PAUZA</label></div>
           <div class="control-tip"><kbd>M</kbd><label>ZVUK</label></div>
         </div>
-        <p class="keyhint" id="keyhint">8 ROUNDS + ENDLESS</p>
-        <div class="end-score" id="endScore" hidden><div><small>TVŮJ SKÓRE</small><strong id="endScoreValue">000000</strong></div><div><small>OSOBNÍ REKORD</small><strong id="bestScoreValue">000000</strong></div><button type="button" class="score-cta" id="showLeaderboard"><span>ZAPSAT SKÓRE<small>DO LOKÁLNÍHO ŽEBŘÍČKU / TEST</small></span><span class="score-cta-arrow" aria-hidden="true">↗</span></button></div>
+        <p class="keyhint" id="keyhint">8 kol, potom hra pokračuje bez konce.</p>
+        <div class="end-score" id="endScore" hidden><div><small>TVÉ SKÓRE</small><strong id="endScoreValue">000000</strong></div><div><small>OSOBNÍ REKORD</small><strong id="bestScoreValue">000000</strong></div><button type="button" class="score-cta" id="showLeaderboard"><span>ZAPSAT SKÓRE<small>DO LOKÁLNÍHO ŽEBŘÍČKU / TEST</small></span><span class="score-cta-arrow" aria-hidden="true">↗</span></button></div>
       </div>
     </div>
-<dialog id="avatarDialog" aria-labelledby="avatarTitle"><header><h2 id="avatarTitle">TVŮJ DJ / TVŮJ STYL</h2><button class="utility" type="button" id="closeAvatar" aria-label="Zavřít editor">HOTOVO ×</button></header><div class="avatar-body"><div class="avatar-preview"><canvas id="avatarCanvas" width="240" height="260" aria-label="Živý náhled postavy"></canvas><p id="avatarSummary" role="status"></p></div><div id="avatarControls"></div></div><footer><button type="button" class="utility" id="randomAvatar">NÁHODNÁ POSTAVA ↻</button><button type="button" class="utility" id="resetAvatar">VÝCHOZÍ VZHLED</button></footer></dialog>
+<dialog id="avatarDialog" aria-labelledby="avatarTitle"><header><h2 id="avatarTitle">ÚPRAVA POSTAVY</h2><button class="utility" type="button" id="closeAvatar" aria-label="Zavřít editor">HOTOVO ×</button></header><div class="avatar-body"><div class="avatar-preview"><canvas id="avatarCanvas" width="240" height="260" aria-label="Živý náhled postavy"></canvas><p id="avatarSummary" role="status"></p></div><div id="avatarControls"></div></div><footer><button type="button" class="utility" id="randomAvatar">NÁHODNÁ POSTAVA ↻</button><button type="button" class="utility" id="resetAvatar">VÝCHOZÍ VZHLED</button></footer></dialog>
 <dialog id="leaderDialog" aria-labelledby="leaderTitle">
   <section class="leaderboard" aria-labelledby="leaderTitle">
  <header><h2 id="leaderTitle">LOKÁLNÍ ŽEBŘÍČEK <small> / TEST</small></h2><button class="utility" id="closeLeaderboard" type="button" aria-label="Zavřít žebříček">ZAVŘÍT ×</button><button class="utility" id="refreshScores" type="button">OBNOVIT</button></header>
- <form id="scoreForm" hidden><label for="nickname">ZAPIŠ SVŮJ SET / PŘEZDÍVKA</label><div class="score-entry"><input id="nickname" name="nickname" minlength="2" maxlength="24" required autocomplete="nickname" placeholder="Tvoje DJ jméno"><button class="utility" id="submitScore" type="submit">ODESLAT SKÓRE</button></div><small>Skóre se ukládá jen v tomto prohlížeči, odděleně od původní hry. Každý test lze zapsat jednou.</small></form>
+ <form id="scoreForm" hidden><label for="nickname">PŘEZDÍVKA</label><div class="score-entry"><input id="nickname" name="nickname" minlength="2" maxlength="24" required autocomplete="nickname" placeholder="Tvoje přezdívka"><button class="utility" id="submitScore" type="submit">ODESLAT SKÓRE</button></div><small>Skóre se ukládá jen v tomto prohlížeči, odděleně od původní hry. Každý test lze zapsat jednou.</small></form>
  <p id="submitStatus" role="status" aria-live="polite"></p>
  <p id="leaderStatus" role="status">Načítám žebříček…</p>
- <div class="leader-scroll"><table><caption>TOP 100 / všechny zapsané sety</caption><thead><tr><th scope="col">#</th><th scope="col">DJ / PLAYER</th><th scope="col">SCORE</th><th scope="col">KOLO</th></tr></thead><tbody id="leaderRows"></tbody></table></div>
+ <div class="leader-scroll"><table><caption>TOP 100 / lokální výsledky</caption><thead><tr><th scope="col">#</th><th scope="col">HRÁČ</th><th scope="col">SKÓRE</th><th scope="col">KOLO</th></tr></thead><tbody id="leaderRows"></tbody></table></div>
 </section>
 </dialog>
   </main>
 
-<footer class="subbar"><button type="button" id="openLeaderboard" class="utility">ŽEBŘÍČEK</button><span class="statement">NO SIGNAL. NO SHOW. <b>KEEP THE FREQUENCY ALIVE.</b></span><span class="desktop-only">MADE FOR THE MIX / ZVUQ.CZ</span><span>© ZVUQ / 2026</span></footer>
+<footer class="subbar"><button type="button" id="openLeaderboard" class="utility">ŽEBŘÍČEK</button><span>© ZVUQ / 2026</span></footer>
 </div>
 <script>
 (() => {
@@ -423,7 +425,7 @@ body::before{opacity:.08}
  }
  window.phaseLeaderboard={
   begin(appearance){generation++;result=null;runAvatar=appearance?JSON.parse(JSON.stringify(appearance)):null;$('scoreForm').hidden=true;$('submitStatus').textContent='';$('submitScore').disabled=false;run=Promise.resolve(localSession());},
-  async finish(value){const current=generation;const session=await run;if(current!==generation)return;if(!session)return;result={...value,avatar:runAvatar,local:true};$('scoreForm').hidden=false;$('submitStatus').textContent='Set dohrán: '+value.score.toLocaleString('cs-CZ')+' bodů / kolo '+value.round+'.'+' Zápis do lokálního testovacího žebříčku.';}
+  async finish(value){const current=generation;const session=await run;if(current!==generation)return;if(!session)return;result={...value,avatar:runAvatar,local:true};$('scoreForm').hidden=false;$('submitStatus').textContent='Test ukončen: '+value.score.toLocaleString('cs-CZ')+' bodů / kolo '+value.round+'.'+' Zápis do lokálního testovacího žebříčku.';}
  };
  function init(){
   try{$('nickname').value=localStorage.getItem('zvuq-test-v1-phase-nickname')||'';}catch(_){}
@@ -459,14 +461,14 @@ body::before{opacity:.08}
   const HELD_GRAVITY=1090, RELEASE_GRAVITY=2380, MAX_FALL=1270;
   const ROUND_NAMES=['SOUND CHECK','GAIN STAGING','FIRST DROP','BREAK SECTION','DOUBLE DROP','REDLINE','LIMITER','FINAL MIX'];
   const ROUND_DESCRIPTIONS=[
-    'ZÁKLADNÍ SIGNÁL / NAJDI RYTMUS',
-    'HUSTŠÍ CLIPY / PRVNÍ VÝPADKY',
-    'PRVNÍ DROP / VYŠŠÍ PEAKY',
-    'ŠIRŠÍ VÝPADKY / ČASUJ ODRAZ',
-    'DVOJITÉ CLIPY / DRŽ RYTMUS',
-    'VYSOKÉ PEAKY / RYCHLÉ REAKCE',
-    'SIGNÁL NA HRANĚ / ŽÁDNÁ REZERVA',
-    'FINÁLNÍ MIX / VŠECHNO DO SETU'
+    'ZÁKLADNÍ PŘEKÁŽKY',
+    'VÍCE PŘEKÁŽEK A MEZER',
+    'VYŠŠÍ PŘEKÁŽKY',
+    'ŠIRŠÍ MEZERY',
+    'DVOJITÉ PŘEKÁŽKY',
+    'VYŠŠÍ PŘEKÁŽKY A RYCHLEJŠÍ BĚH',
+    'MÉNĚ MÍSTA MEZI PŘEKÁŽKAMI',
+    'NEJVYŠŠÍ RYCHLOST A OBTÍŽNOST'
   ];
   const ROUND_SPECS=[
     {speed:240,space:460,jitter:130,gap:.22,gapMin:82,gapMax:104,clipMin:30,clipMax:44,double:0},
@@ -632,11 +634,13 @@ body::before{opacity:.08}
     const button=$('fullscreenPauseBtn');
     const paused=state.mode==='paused';
     el.pause.disabled=state.mode!=='running'&&!paused;
-    el.pause.innerHTML=paused?'<span aria-hidden="true">▶</span><span class="t">POKRAČOVAT</span>':'<span aria-hidden="true">Ⅱ</span><span class="t">PAUZA</span>';
+    const pauseLabel=paused?'<span aria-hidden="true">▶</span><span class="t">POKRAČOVAT</span>':'<span aria-hidden="true">II</span><span class="t">PAUZA</span>';
+    // Keep the clicked element alive between pointerdown and click.
+    if(el.pause.innerHTML!==pauseLabel)el.pause.innerHTML=pauseLabel;
     el.pause.setAttribute('aria-label',paused?'Pokračovat ve hře':'Pozastavit hru');
     el.pause.setAttribute('aria-pressed',String(paused));
     button.hidden=state.mode!=='running'&&!paused;
-    button.textContent=paused?'▶':'Ⅱ';
+    button.textContent=paused?'▶':'II';
     button.setAttribute('aria-label',paused?'Pokračovat ve hře':'Pozastavit hru');
     button.title=paused?'Pokračovat':'Pauza';
   }
@@ -729,9 +733,9 @@ body::before{opacity:.08}
     window.phaseLeaderboard.finish({score:total,round:state.round,duration:state.elapsed,distance:state.distance});
     if(total>best){best=total;try{localStorage.setItem('zvuq-test-v1-zvuq-phase-rider-bars8-best',String(best));}catch(_){}}
     el.coverTop.textContent='TEST // UKONČENO';
-    el.heading.innerHTML='TEST <em>OVER.</em>';
+    el.heading.innerHTML='KONEC <em>TESTU.</em>';
     el.intro.innerHTML='Test je ukončený. <b>Zapiš skóre lokálně, nebo spusť další test.</b>';
-    el.start.innerHTML='ZNOVU NA VLNU <span class="arrow">↗</span>';
+    el.start.innerHTML='NOVÝ TEST <span class="arrow">↗</span>';
     el.controls.hidden=true;el.hint.hidden=true;el.end.hidden=false;
     el.endValue.textContent=fmt(total);el.best.textContent=fmt(best);
     setCover(true);updateHud();
@@ -741,8 +745,8 @@ body::before{opacity:.08}
     if(state.mode==='running'){
       state.mode='paused';state.shake=0;releaseJump();state.player.buffer=0;last=0;stopMusic();
       if(sfxBus)sfxBus.gain.setTargetAtTime(0,audioContext.currentTime,.01);
-      el.coverTop.textContent='SYSTEM // PAUSED';el.heading.innerHTML='ON <em>HOLD.</em>';el.heading.classList.add('pause-heading');
-      el.intro.innerHTML='Zadržel jsi signál. Až budeš připravený, <b>pokračuj v setu.</b>';
+      el.coverTop.textContent='HRA POZASTAVENA';el.heading.innerHTML='<em>PAUZA.</em>';el.heading.classList.add('pause-heading');
+      el.intro.innerHTML='Pro pokračování stiskni <b>P</b> nebo tlačítko <b>Pokračovat</b>.';
       el.start.innerHTML='POKRAČOVAT <span class="arrow">→</span>';
       el.controls.hidden=true;el.hint.hidden=true;el.end.hidden=true;
       setCover(true);
@@ -767,7 +771,7 @@ body::before{opacity:.08}
     playJumpScratch();
     if(perfect){
       state.phaseFlash=.8;
-      announce('◆ PERFECT PHASE');
+      announce('◆ PŘESNÝ ODRAZ');
       burst(playerX(),p.y-34,'#b4ffe3',14);
     }else{
       burst(playerX(),p.y-8,'#ed3540',7);
@@ -786,9 +790,9 @@ body::before{opacity:.08}
     state.score+=n*225;
     // Small reward in difficult stages: one recovered signal heart.
     // Test mode: lives remain unlimited in every round.
-    el.stageCaption.textContent=n<=MAX_MAIN_ROUND?'KOLO '+String(n).padStart(2,'0')+' / 08':'ENDLESS / KOLO '+n;
+    el.stageCaption.textContent=n<=MAX_MAIN_ROUND?'KOLO '+String(n).padStart(2,'0')+' / 08':'DALŠÍ KOLO '+n;
     el.stageTitle.textContent=roundTitle(n);
-    el.stageDescription.textContent=n<=MAX_MAIN_ROUND?ROUND_DESCRIPTIONS[n-1]:'LIMITER OFF / PŘEŽIJ CO NEJDÉLE';
+    el.stageDescription.textContent=n<=MAX_MAIN_ROUND?ROUND_DESCRIPTIONS[n-1]:'HRA POKRAČUJE BEZ KONCE';
     el.stageBanner.classList.add('show');
     burst(playerX(),state.player.y-70,'#b4ffe3',24);
     playNote(440*Math.pow(2,(n%5)/12),.24,'sine',.10);
@@ -803,7 +807,7 @@ body::before{opacity:.08}
       // Respawn vertically; the route keeps its musical position.
       p.y=waveY(state.distance)-37;
     }
-    announce(kind==='gap'?'✕ SIGNAL DROP':'✕ SIGNAL CLIPPING',true);
+    announce(kind==='gap'?'✕ PÁD DO MEZERY':'✕ NÁRAZ DO PŘEKÁŽKY',true);
     burst(playerX(),p.y-25,'#ff303d',27);
     playClash(kind);updateHud();
     // Collisions keep the test running with the original knockback and respawn.
@@ -883,7 +887,7 @@ body::before{opacity:.08}
       if(Math.abs(item.x-state.distance)<22&&Math.abs((p.y-41)-cy)<38){
         item.done=true;state.combo=Math.min(16,state.combo+1);
         state.score+=120*state.combo;
-        announce('✦ SAMPLE CAPTURED +'+(120*state.combo));
+        announce('✦ BONUS +'+(120*state.combo));
         burst(playerX(),cy,'#b4ffe3',18);
         playScratch(state.combo);
         updateHud();
@@ -945,14 +949,6 @@ body::before{opacity:.08}
       const height=size*backdropLogoMask.height/backdropLogoMask.width;
       ctx.drawImage(backdropLogoMask,ringX-size/2,ringY-height/2,size,height);
       ctx.restore();
-    }
-    const labelX=W>600?26:15;
-    print('0 dB',labelX,H*.35,9,'rgba(156,124,129,.45)');
-    print('-12',labelX,H*.48,9,'rgba(156,124,129,.37)');
-    print('-24',labelX,H*.60,9,'rgba(156,124,129,.30)');
-    if(W>650){
-      print('TIMEBASE / 20 ms',W-25,H*.32,9,'rgba(151,115,124,.38)','right');
-      print('ADC / 24-bit',W-25,H*.35,9,'rgba(151,115,124,.38)','right');
     }
     // Reference oscilloscope trace: secondary stereo monitor channel.
     ctx.beginPath();
@@ -1071,7 +1067,6 @@ body::before{opacity:.08}
     ctx.fillStyle='#101115';ctx.fillRect(centerX-24,badgeY,48,21);
     ctx.strokeStyle='#ff6b70';ctx.lineWidth=1.5;ctx.strokeRect(centerX-24,badgeY,48,21);
     print('CLIP',centerX,badgeY+14,11,'#fff1ed','center',800);
-    print('REDLINE / PEAK',centerX,badgeY-10,8,'#ff6b70','center',500);
     ctx.restore();
   }
   function drawPickups(){
@@ -1291,7 +1286,7 @@ body::before{opacity:.08}
     }
     if(look.accessory===3){ctx.strokeStyle='#e6bc68';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-9,-59);ctx.quadraticCurveTo(0,-42,9,-59);ctx.stroke();ctx.fillStyle='#e6bc68';ctx.fillRect(-2,-49,4,5);}
     ctx.restore();
-    if(!preview&&W>420)print(isDjane?'DJANE / DECK 02':'DJ / DECK 01',0,-108,8,isDjane?'#b4ffe3':'#ff818b','center',700);
+    if(!preview&&W>420)print(isDjane?'DJANE':'DJ',0,-108,8,isDjane?'#b4ffe3':'#ff818b','center',700);
     if(!preview&&state.phaseFlash>0){ctx.globalAlpha=state.phaseFlash;print('SYNC',0,-123,10,'#b4ffe3','center',800);}
     ctx.restore();
   }
@@ -1575,7 +1570,7 @@ body::before{opacity:.08}
   }
   function playError(){playClash();}
   function syncAudioButton(){
-    el.audioLabel.textContent=audioEnabled?'DNB ON':'AUDIO OFF';
+    el.audioLabel.textContent=audioEnabled?'ZVUK ZAPNUTÝ':'ZVUK VYPNUTÝ';
     el.audio.classList.toggle('on',audioEnabled);
     el.audio.setAttribute('aria-pressed',String(audioEnabled));
     $('muteIcon').setAttribute('d',audioEnabled?'M17 9q5 3 0 6':'M17 9l5 6m0-6l-5 6');
@@ -1677,14 +1672,19 @@ body::before{opacity:.08}
   window.addEventListener('pagehide',autoPause);
   document.addEventListener('keydown',e=>{
     if(leaderDialog.open||avatarDialog.open)return;
-    if(e.target.closest('input,textarea,select,button') || e.target.isContentEditable)return;
+    if(e.target.closest('input,textarea,select') || e.target.isContentEditable)return;
     const key=e.code;
+    if(key==='KeyP'||key==='Escape'){
+      e.preventDefault();
+      if(!e.repeat)pause();
+      return;
+    }
+    if(e.target.closest('button'))return;
     if(['Space','ArrowUp','KeyW','ArrowDown'].includes(key))e.preventDefault();
     if(key==='Space'||key==='ArrowUp'||key==='KeyW'){
       if(!e.repeat){if(state.mode==='menu'||state.mode==='over')start();else if(state.mode==='paused')pause();else jump();}
       state.jumpHeld=state.mode==='running';
-    }else if(key==='KeyP'||key==='Escape'){if(!e.repeat)pause();}
-    else if(key==='KeyR'&&!e.repeat){start();}
+    }else if(key==='KeyR'&&!e.repeat){start();}
     else if(key==='KeyM'&&!e.repeat){toggleAudio();}
     else if(key==='KeyF'&&!e.repeat){el.full.click();}
   });
