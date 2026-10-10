@@ -194,6 +194,10 @@ html,body{height:100%;min-height:0;overflow:hidden}
 .subbar{min-width:0;gap:10px}
 .cover{overflow:hidden;align-items:center!important;justify-content:center!important}
 .cover-panel{margin:0;transform:scale(var(--cover-scale,1));transform-origin:center;flex-shrink:0}
+/* Gameplay overlays must not overlap the menu or pause screen. */
+.gamebox.cover-open .game-header,.gamebox.cover-open .game-footer,.gamebox.cover-open .mobile-actions{visibility:hidden;pointer-events:none}
+.cover.scroll-menu{overflow-y:auto;align-items:flex-start!important}
+@media(max-width:480px){.page-title .game-title{display:none}.page-title{justify-content:flex-end}}
 #leaderDialog{width:min(780px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid #625056;background:#0b0c0f;color:var(--white);overflow:auto}
 #leaderDialog::backdrop{background:rgba(0,0,0,.8);backdrop-filter:blur(5px)}
 #leaderDialog .leaderboard{margin:0;border:0;padding:clamp(12px,3vw,24px)}
@@ -367,11 +371,11 @@ body::before{opacity:.08}
           <div class="control-tip"><kbd>P</kbd><label>PAUZA</label></div>
           <div class="control-tip"><kbd>M</kbd><label>ZVUK</label></div>
         </div>
-        <p class="keyhint" id="keyhint">8 kol, potom hra pokračuje bez konce.</p>
+        <p class="keyhint" id="keyhint">Krátký stisk = nízký skok · podržení = vysoký skok.</p>
         <div class="end-score" id="endScore" hidden><div><small>TVÉ SKÓRE</small><strong id="endScoreValue">000000</strong></div><div><small>OSOBNÍ REKORD</small><strong id="bestScoreValue">000000</strong></div><button type="button" class="score-cta" id="showLeaderboard"><span>ZAPSAT SKÓRE<small>DO LOKÁLNÍHO ŽEBŘÍČKU / TEST</small></span><span class="score-cta-arrow" aria-hidden="true">↗</span></button></div>
       </div>
     </div>
-<dialog id="avatarDialog" aria-labelledby="avatarTitle"><header><h2 id="avatarTitle">ÚPRAVA POSTAVY</h2><button class="utility" type="button" id="closeAvatar" aria-label="Zavřít editor">HOTOVO ×</button></header><div class="avatar-body"><div class="avatar-preview"><canvas id="avatarCanvas" width="480" height="520" aria-label="Živý náhled postavy"></canvas><p id="avatarSummary" role="status"></p><small>Vzhled nemění skoky ani kolize.</small></div><div id="avatarControls"></div></div><footer><button type="button" class="utility" id="randomAvatar">NÁHODNÁ POSTAVA ↻</button><button type="button" class="utility" id="resetAvatar">VÝCHOZÍ VZHLED</button></footer></dialog>
+<dialog id="avatarDialog" aria-labelledby="avatarTitle"><header><h2 id="avatarTitle">ÚPRAVA POSTAVY</h2><button class="utility" type="button" id="closeAvatar" aria-label="Zavřít editor">HOTOVO ×</button></header><div class="avatar-body"><div class="avatar-preview"><canvas id="avatarCanvas" width="480" height="520" aria-label="Živý náhled postavy"></canvas><p id="avatarSummary" role="status"></p><small>Vzhled nemění skoky ani kolize.</small></div><div id="avatarControls"></div></div><footer><button type="button" class="utility" id="randomAvatar">NÁHODNÝ VZHLED ↻</button><button type="button" class="utility" id="resetAvatar">VÝCHOZÍ VZHLED</button></footer></dialog>
 <dialog id="leaderDialog" aria-labelledby="leaderTitle">
   <section class="leaderboard" aria-labelledby="leaderTitle">
  <header><h2 id="leaderTitle">LOKÁLNÍ ŽEBŘÍČEK <small> / TEST</small></h2><button class="utility" id="closeLeaderboard" type="button" aria-label="Zavřít žebříček">ZAVŘÍT ×</button><button class="utility" id="refreshScores" type="button">OBNOVIT</button></header>
@@ -515,7 +519,9 @@ body::before{opacity:.08}
     if(state.mode!=='menu'&&state.mode!=='over')return;
     character=choice;
     state.character=choice;
-    syncCharacterPortraits();
+    avatar=characterAvatars[choice];
+    saveAvatar();
+    syncAvatarControls();
     characterButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.character===choice)));
     try {localStorage.setItem('zvuq-test-v1-zvuq-phase-rider-character',choice);}catch(_){}
   }
@@ -524,8 +530,26 @@ body::before{opacity:.08}
 
   const avatarOptions={base:['DJ','DJANE'],head:['KLASICKÁ','KULATÁ','HRANATÁ','ÚZKÁ'],skin:['SVĚTLÁ','ZLATÁ','HNĚDÁ','TMAVÁ'],hair:['KRÁTKÉ S PATKOU','VYHOLENÉ BOKY','AFRO','ČÍRO','BEZ VLASŮ','MIKÁDO','DLOUHÉ','CULÍK'],hairColor:['TMAVÉ','HNĚDÉ','BLOND','RŮŽOVÉ'],top:['TRIČKO','MIKINA','BUNDA','SAKO'],color:['GRAFIT','ČERVENÁ','TYRKYS','FIALOVÁ'],pants:['TEPLÁKY','DŽÍNY','CARGO','ČERNÉ'],shoes:['BÍLÉ','ČERVENÉ','MINT','ČERNÉ'],accessory:['SLUCHÁTKA','SLUCHÁTKA + BRÝLE','KŠILTOVKA','ZLATÝ ŘETÍZEK','BEZ DALŠÍHO DOPLŇKU','BRÝLE'],ride:['SKATEBOARD','HOVERBOARD','LÉTAJÍCÍ VINYL'],earrings:['BEZ NÁUŠNIC','KROUŽKY']};
   const avatarDefaults={head:0,skin:0,hair:0,hairColor:0,top:0,color:0,pants:0,shoes:0,accessory:0,ride:1,earrings:1};
-  let avatar={...avatarDefaults};
-  try{const saved=JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-avatar')||'{}');for(const key of Object.keys(avatar))if(Number.isInteger(saved[key])&&saved[key]>=0&&saved[key]<avatarOptions[key].length)avatar[key]=saved[key];}catch(_){}
+  function defaultAvatar(choice){return {...avatarDefaults,hair:choice==='djane'?5:0,earrings:choice==='djane'?1:0};}
+  function restoreAvatar(choice,value){
+    const look=defaultAvatar(choice);
+    if(value&&typeof value==='object')for(const key of Object.keys(look)){
+      if(Number.isInteger(value[key])&&value[key]>=0&&value[key]<avatarOptions[key].length)look[key]=value[key];
+    }
+    return look;
+  }
+  // Each character owns its appearance; switching only selects an existing profile.
+  const characterAvatars={dj:defaultAvatar('dj'),djane:defaultAvatar('djane')};
+  try{
+    const saved=JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-character-avatars-v2')||'null');
+    if(saved&&typeof saved==='object'){
+      for(const choice of ['dj','djane'])characterAvatars[choice]=restoreAvatar(choice,saved[choice]);
+    }else{
+      // The old shared appearance belongs to the character selected when it was saved.
+      characterAvatars[character]=restoreAvatar(character,JSON.parse(localStorage.getItem('zvuq-test-v1-zvuq-avatar')||'null'));
+    }
+  }catch(_){}
+  let avatar=characterAvatars[character];
   const hairColors=['#24202c','#68412e','#dbc17c','#e8589d'];
   const skins=['#e5ad9b','#c58b60','#955e3e','#593b30'];
   const topColors=['#252a34','#ae2434','#25746e','#705099'];
@@ -663,6 +687,7 @@ body::before{opacity:.08}
   function setCover(visible){
     syncFullscreenPause();
     el.cover.classList.toggle('hidden',!visible);
+    el.box.classList.toggle('cover-open',visible);
     if(!visible)el.box.focus({preventScroll:true});
     el.cover.classList.toggle('is-over',state.mode==='over');
     if(visible)el.cover.scrollTop=0;
@@ -1346,7 +1371,7 @@ body::before{opacity:.08}
       if(x>W+80||x+h.w< -80)continue;
       if(h.kind==='gap')drawGap(h,x);else drawClip(h,x);
     }
-    drawPickups();drawParticles();drawDJ();drawOverlays();
+    drawPickups();drawParticles();if(state.mode==='running'||state.mode==='paused')drawDJ();drawOverlays();
     ctx.restore();
   }
   function startSilentClock(){
@@ -1657,7 +1682,7 @@ body::before{opacity:.08}
     for(const button of characterButtons){
       const canvas=button.querySelector('.character-portrait');
       const choice=button.dataset.character;
-      const look=choice===character?avatar:{...avatarDefaults,hair:choice==='djane'?5:0,earrings:choice==='djane'?1:0};
+      const look=characterAvatars[choice];
       const portrait=document.createElement('canvas');portrait.width=480;portrait.height=520;
       const source=portrait.getContext('2d');source.scale(2,2);
       drawDJ(source,true,{...look,character:choice});
@@ -1668,18 +1693,18 @@ body::before{opacity:.08}
   syncCharacterPortraits();
   const avatarDialog=$('avatarDialog');
   const avatarLabels={base:'POSTAVA',head:'HLAVA',skin:'PLEŤ',hair:'ÚČES',hairColor:'BARVA VLASŮ',top:'VRŠEK',color:'BARVA VRŠKU',pants:'KALHOTY',shoes:'BOTY',accessory:'DALŠÍ DOPLNĚK',ride:'NA ČEM JEDEŠ',earrings:'NÁUŠNICE'};
-  function saveAvatar(){syncCharacterPortraits();try{localStorage.setItem('zvuq-test-v1-zvuq-avatar',JSON.stringify(avatar));}catch(_){} }
+  function saveAvatar(){characterAvatars[character]=avatar;syncCharacterPortraits();try{localStorage.setItem('zvuq-test-v1-zvuq-character-avatars-v2',JSON.stringify(characterAvatars));}catch(_){} }
   let avatarPreviewFrame=0;
   avatarDialog.addEventListener('close',()=>{cancelAnimationFrame(avatarPreviewFrame);avatarPreviewFrame=0;});
   function previewAvatar(){if(!avatarDialog.open)return;const c=$('avatarCanvas').getContext('2d');c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,240,260);c.strokeStyle='#f12730';c.lineWidth=2;c.beginPath();for(let x=0;x<=240;x++){const y=226+Math.sin(x*.04+state.t)*4;if(x===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();drawDJ(c,true);avatarPreviewFrame=requestAnimationFrame(previewAvatar);}
   function syncAvatarControls(){for(const [key,options] of Object.entries(avatarOptions))$('avatar-'+key).value=String(key==='base'?(state.character==='djane'?1:0):avatar[key]);$('avatarSummary').textContent=avatarOptions.hair[avatar.hair]+' · '+avatarOptions.ride[avatar.ride];}
   const avatarGroups=[['POSTAVA',['base','head','skin']],['VLASY',['hair','hairColor']],['OBLEČENÍ',['top','color','pants','shoes']],['DOPLŇKY',['earrings','accessory']],['JÍZDA',['ride']]];
   for(const [name,keys] of avatarGroups){const group=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=name;group.append(legend);$('avatarControls').append(group);
-  for(const key of keys){const options=avatarOptions[key];const label=document.createElement('label');label.textContent=avatarLabels[key];label.htmlFor='avatar-'+key;const select=document.createElement('select');select.id='avatar-'+key;options.forEach((name,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=name;select.append(option);});select.addEventListener('change',()=>{if(key==='base')chooseCharacter(Number(select.value)?'djane':'dj');else avatar[key]=Number(select.value);saveAvatar();syncAvatarControls();});label.append(select);group.append(label);}}
+  for(const key of keys){const options=avatarOptions[key];const label=document.createElement('label');label.textContent=avatarLabels[key];label.htmlFor='avatar-'+key;const select=document.createElement('select');select.id='avatar-'+key;options.forEach((name,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=name;select.append(option);});select.addEventListener('change',()=>{if(key==='base'){chooseCharacter(Number(select.value)?'djane':'dj');}else{avatar[key]=Number(select.value);saveAvatar();syncAvatarControls();}});label.append(select);group.append(label);}}
   $('customizeAvatar').addEventListener('click',()=>{if(state.mode!=='menu'&&state.mode!=='over')return;syncAvatarControls();avatarDialog.showModal();previewAvatar();});
   $('closeAvatar').addEventListener('click',()=>avatarDialog.close());
-  $('randomAvatar').addEventListener('click',()=>{chooseCharacter(Math.random()<.5?'dj':'djane');for(const key of Object.keys(avatar))avatar[key]=Math.floor(Math.random()*avatarOptions[key].length);saveAvatar();syncAvatarControls();});
-  $('resetAvatar').addEventListener('click',()=>{avatar={...avatarDefaults};saveAvatar();syncAvatarControls();});
+  $('randomAvatar').addEventListener('click',()=>{for(const key of Object.keys(avatar))avatar[key]=Math.floor(Math.random()*avatarOptions[key].length);saveAvatar();syncAvatarControls();});
+  $('resetAvatar').addEventListener('click',()=>{avatar=defaultAvatar(character);saveAvatar();syncAvatarControls();});
   const leaderDialog=$('leaderDialog');
   function openLeaderboard(){
     if(state.mode==='running')pause();
@@ -1694,7 +1719,9 @@ body::before{opacity:.08}
     const cs=getComputedStyle(el.cover);
     const available=el.cover.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
     const scale=Math.min(1,Math.max(0,available)/Math.max(1,coverPanel.offsetHeight));
-    coverPanel.style.setProperty('--cover-scale',String(scale));
+    const scrollMenu=scale<.8;
+    el.cover.classList.toggle('scroll-menu',scrollMenu);
+    coverPanel.style.setProperty('--cover-scale',String(scrollMenu?1:scale));
   }
   const coverObserver=new ResizeObserver(fitCover);
   coverObserver.observe(el.box);coverObserver.observe(coverPanel);
@@ -1759,7 +1786,7 @@ body::before{opacity:.08}
   el.box.addEventListener('contextmenu',e=>e.preventDefault());
   // Start the transfer in the menu; browsers may keep audio locked until Start.
   fetchMusicBytes().catch(error=>console.warn('Přednačtení hudby:',error));
-  updateHud();raf=requestAnimationFrame(loop);
+  setCover(true);updateHud();raf=requestAnimationFrame(loop);
   window.__zvuqGame={getState:()=>({mode:state.mode,score:Math.floor(state.score+(state.distance-runStartDistance)*.095),distance:state.distance,round:state.round,hearts:state.hearts,grounded:state.player.grounded,vy:state.player.vy,y:state.player.y,speed:state.speed,jumpHeld:state.jumpHeld,musicDecoded:!!songBuffer,musicPlaying:!!songSource,elapsed:state.elapsed,transportTime:transportPosition(),transportKind:transport?transport.kind:null,character:state.character,musicDuration:songBuffer?Math.round(songBuffer.duration*100)/100:0}),start,jump,pause};
 })();
 </script>
