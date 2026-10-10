@@ -1656,8 +1656,13 @@ body::before{opacity:.08}
   function syncCharacterPortraits(){
     for(const button of characterButtons){
       const canvas=button.querySelector('.character-portrait');
-      const c=canvas.getContext('2d');c.setTransform(2,0,0,2,0,0);c.clearRect(0,0,240,260);
-      drawDJ(c,true,{character:button.dataset.character,...avatar});
+      const choice=button.dataset.character;
+      const look=choice===character?avatar:{...avatarDefaults,hair:choice==='djane'?5:0,earrings:choice==='djane'?1:0};
+      const portrait=document.createElement('canvas');portrait.width=480;portrait.height=520;
+      const source=portrait.getContext('2d');source.scale(2,2);
+      drawDJ(source,true,{...look,character:choice});
+      const c=canvas.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,480,520);
+      c.drawImage(portrait,120,100,240,380,0,0,480,520);
     }
   }
   syncCharacterPortraits();
